@@ -6,17 +6,14 @@
 class Piece {
 
 private:
-    //This is a blank player object to be used by all null pieces
-    const static Player m_nullPlayer;
-
-    //reference to the Player who owns this piece
-    const Player& m_owner;
-
-    //Boolean to determine wether this piece is valid
-    bool m_isNullPiece;
+    //Pointer to the player that owns the piece. 
+    //Players should outlive the game (and by extension the pieces) so this should never be an unintended dangling pointer
+    Player const * m_owner;
+    //Boolean for if the piece is a nullptr or not
+    bool m_isValidPiece;
 
 public:
-    //Default Constructor: Generates a null piece
+    //Generates a null piece
     Piece();
     //Generates a valid player-owned piece
     Piece(const Player& owner);
@@ -25,6 +22,11 @@ public:
     
     //Returns the owner of the piece
     const Player& getOwner() const;
+
+    Piece& operator=(const Piece&);
+    
+    operator bool() const;
+    bool isValidPiece() const;
 
 };
 

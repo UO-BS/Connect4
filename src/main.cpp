@@ -7,16 +7,19 @@
 
 int main()
 {
-    Player playerList[2]{Player("Player1"),Player("Player2")};
+    Player player1 = Player("Player1 ");
+    Player player2 = Player("Player2 ");
+    Player playerList[2]{player1,player2};
+    ConnectGame* mainGame = new ConnectGame{playerList,8,8};
     
-    ConnectGame* mainGame = new ConnectGame{playerList};
-    
-    mainGame->dropPiece(1, Piece(Player("TESTER")));
+    mainGame->dropPiece(1, Piece(player1));
+    mainGame->dropPiece(1, Piece(player1));
 
-    for (int i=0;i<8;i++) {
+
+    for (int row=7;row>=0;row--) {
         for (int column=0;column<8;column++) {
-            if ((mainGame->getBoard())[column][i].hasPiece()) {
-                std::cout << (mainGame->getBoard())[column][i].getPiece().getOwner().getName();
+            if ((mainGame->getBoard())[column][row]) {
+                std::cout << (mainGame->getBoard())[column][row].getOwner().getName();
             } else {
                 std::cout << "NoPiece ";
             }

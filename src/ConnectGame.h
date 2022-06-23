@@ -3,32 +3,51 @@
 
 #include "Piece.h"
 #include "Player.h"
-#include "Position.h"
 
 class ConnectGame
 {
 private:
-    Position** m_board;
+    //Member Variables
+    Piece** m_board; //Position 0,0 is at the bottom left of the board
     const Player (&m_playerList)[2];
     const int m_columnNum;
     const int m_rowNum;
+    int m_currentTurnIndex;
     
+    //Helper function to place a piece
     void placePiece(int column, int row, const Piece& newPiece);
 
-    Player checkForWin() const;
+    //Functions to check if a player has won
+    bool checkVerticalWin(int column, int row) const;
+    bool checkHorizontalWin(int column, int row) const;
+    bool checkUpDiagonalWin(int column, int row) const;
+    bool checkDownDiagonalWin(int column, int row) const;
+
+    //Functions to cycle game turns
+    void cycleTurn();
+    const Player& getCurrentTurn() const;
+
 public:
     //remove default constructor
     ConnectGame()=delete;
     
-    ConnectGame(const Player (&players)[2]);
-
-    //Checker Games cannot be copied
+    ConnectGame(const Player (&players)[2], int columnNumber , int rowNumber);
+    
+    //Games cannot be copied
     ConnectGame(const ConnectGame& original)=delete;
 
-    //Returns a copy of the board
-    Position** const getBoard() const;    
+    ~ConnectGame();
 
-    void dropPiece(int column, const Piece& newPiece);
+    //Returns a copy of the board
+    Piece** const getBoard() const;    
+
+    bool dropPiece(int column, const Piece& newPiece);
+
+    //Players should outlive the game object, therefore a nullptr return indicates no winner
+    const Player* checkForWin() const;
+
+    const int getRowNumber() const;
+    const int getColumnNumber() const;
 };
 
 #endif
