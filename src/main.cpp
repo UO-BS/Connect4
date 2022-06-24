@@ -5,6 +5,7 @@
 #include <iostream>
 #include <limits>
 
+//IMPORTANT NOTE: This is only for testing. The program is currently not usable
 int main()
 {
     Player player1 = Player("Player1 ");
@@ -12,20 +13,36 @@ int main()
     Player playerList[2]{player1,player2};
     ConnectGame* mainGame = new ConnectGame{playerList,8,8};
     
-    mainGame->dropPiece(1, Piece(player1));
-    mainGame->dropPiece(1, Piece(player1));
+    while (mainGame->checkForWin()==nullptr) {
 
-
-    for (int row=7;row>=0;row--) {
-        for (int column=0;column<8;column++) {
-            if ((mainGame->getBoard())[column][row]) {
-                std::cout << (mainGame->getBoard())[column][row].getOwner().getName();
+        int columnNum{};
+        int playerNum{};
+        Player* playerChoice =nullptr;
+        do {
+            std::cout << "column: ";
+            std::cin >> columnNum;
+            std::cout << "player: ";
+            std::cin >> playerNum;
+            if (playerNum==1) {
+                playerChoice=&player1;
             } else {
-                std::cout << "NoPiece ";
+                playerChoice=&player2;
             }
+        } while (!mainGame->dropPiece(columnNum, Piece(*playerChoice)));
+        
+
+        for (int row=7;row>=0;row--) {
+            for (int column=0;column<8;column++) {
+                if ((mainGame->getBoard())[column][row]) {
+                    std::cout << (mainGame->getBoard())[column][row].getOwner().getName();
+                } else {
+                    std::cout << "NoPiece ";
+                }
+            }
+            std::cout << "\n";
         }
-        std::cout << "\n";
     }
+    
 
     delete mainGame;
     

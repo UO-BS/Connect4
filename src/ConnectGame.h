@@ -12,7 +12,7 @@ private:
     const Player (&m_playerList)[2];
     const int m_columnNum;
     const int m_rowNum;
-    int m_currentTurnIndex;
+    int m_turnCount;
     
     //Helper function to place a piece
     void placePiece(int column, int row, const Piece& newPiece);
@@ -39,7 +39,7 @@ public:
     ~ConnectGame();
 
     //Returns a copy of the board
-    Piece** const getBoard() const;    
+    Piece ** getBoard() const;    
 
     bool dropPiece(int column, const Piece& newPiece);
 

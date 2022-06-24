@@ -1,8 +1,9 @@
 #include "ConnectGame.h"
 #include <iostream>
 
+
 ConnectGame::ConnectGame(const Player (&players)[2], int columnNumber, int rowNumber) : 
-    m_board{} , m_playerList{players}, m_columnNum{columnNumber} , m_rowNum{rowNumber}, m_currentTurnIndex{0}
+    m_board{} , m_playerList{players}, m_columnNum{columnNumber} , m_rowNum{rowNumber}, m_turnCount{0}
 {
     m_board = new Piece*[m_columnNum];
     for (int i=0;i<m_columnNum;i++) {
@@ -18,7 +19,7 @@ ConnectGame::~ConnectGame()
    delete[] m_board;
 }
 
-Piece** const ConnectGame::getBoard() const
+Piece** ConnectGame::getBoard() const
 {
     return m_board;
 }
@@ -50,7 +51,6 @@ bool ConnectGame::dropPiece(int column, const Piece& newPiece)
 
 bool ConnectGame::checkVerticalWin(int column, int row) const
 {
-    
     int connectCount{1};
     int moveCounter{1};
 
@@ -132,7 +132,7 @@ bool ConnectGame::checkUpDiagonalWin(int column, int row) const
     int moveCounter{1};
 
     while (true) {
-        if (column+moveCounter >= m_columnNum && row+moveCounter >= m_rowNum) {
+        if (column+moveCounter >= m_columnNum || row+moveCounter >= m_rowNum) {
             break;
         }
         else if (!m_board[column+moveCounter][row+moveCounter].isValidPiece()) {
@@ -148,7 +148,7 @@ bool ConnectGame::checkUpDiagonalWin(int column, int row) const
     moveCounter=1;
     
     while (true) {
-        if (column-moveCounter < 0 && row-moveCounter < 0) {
+        if (column-moveCounter < 0 || row-moveCounter < 0) {
             break;
         }
         else if (!m_board[column-moveCounter][row-moveCounter].isValidPiece()) {
@@ -170,7 +170,7 @@ bool ConnectGame::checkDownDiagonalWin(int column, int row) const
     int moveCounter{1};
 
     while (true) {
-        if (column+moveCounter >= m_columnNum && row-moveCounter < 0) {
+        if (column+moveCounter >= m_columnNum || row-moveCounter < 0) {
             break;
         }
         else if (!m_board[column+moveCounter][row-moveCounter].isValidPiece()) {
@@ -186,7 +186,7 @@ bool ConnectGame::checkDownDiagonalWin(int column, int row) const
     moveCounter=1;
     
     while (true) {
-        if (column-moveCounter < 0 && row+moveCounter >= m_rowNum) {
+        if (column-moveCounter < 0 || row+moveCounter >= m_rowNum) {
             break;
         }
         else if (!m_board[column-moveCounter][row+moveCounter].isValidPiece()) {
@@ -224,7 +224,6 @@ const Player* ConnectGame::checkForWin() const
                 if (checkDownDiagonalWin(column, row)){
                     return &m_board[column][row].getOwner();
                 }
-
             }
         }
     }
@@ -236,13 +235,10 @@ const int ConnectGame::getColumnNumber() const {return m_columnNum;}
 
 void ConnectGame::cycleTurn()
 {
-    if (m_currentTurnIndex==2) {
-        m_currentTurnIndex=0;
-    }
-    m_currentTurnIndex++;
+    m_turnCount++;
 }
 
 const Player& ConnectGame::getCurrentTurn() const
 {
-    return m_playerList[m_currentTurnIndex];
+    return m_playerList[m_turnCount%2];
 }

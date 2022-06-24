@@ -11,7 +11,7 @@ private:
     static int idGenerator;
     int m_id;
 public:
-    Player(std::string playerName="nullPlayer");
+    Player(std::string playerName="UnnamedPlayer");
 
     Player(const Player& orig);
 
