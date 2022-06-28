@@ -14,13 +14,13 @@ class BotUser : public Player
 {
 private:
     // Input layer (64) -> 4x4 layer (5X5)  -> 2x2 layer (7X7) -> individual layer (8X8) -> choose from the 8 rows
-    std::array<float,64> m_inputOwnerLayer; //-1 is Opponent piece, 0 is unoccupied, 1 is Bot's piece
-    std::array<float,1600> m_firstLayerWeight;
-    std::array<float,25> m_firstLayer;
-    std::array<float,1225> m_secondLayerWeight;
-    std::array<float,49> m_secondLayer;
-    std::array<float,3136> m_outputLayerWeight;
-    std::array<float,64> m_outputLayer;
+    std::array<float,64>    m_inputOwnerLayer; //-1 is Opponent piece, 0 is unoccupied, 1 is Bot's piece
+    std::array<float,1600>  m_firstLayerWeight;
+    std::array<float,25>    m_firstLayer;
+    std::array<float,1225>  m_secondLayerWeight;
+    std::array<float,49>    m_secondLayer;
+    std::array<float,3136>  m_outputLayerWeight;
+    std::array<float,64>    m_outputLayer;
 
     std::vector<int> m_choiceHistory;
 
