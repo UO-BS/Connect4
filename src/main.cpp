@@ -1,35 +1,35 @@
 #include "Player.h"
 #include "Piece.h"
 #include "ConnectGame.h"
+#include "BotUser.h"
 #include <string>
 #include <iostream>
 #include <limits>
+#include <math.h>
+
 
 //IMPORTANT NOTE: This is only for testing. The program is currently not usable
 int main()
 {
     Player player1 = Player("Player1 ");
-    Player player2 = Player("Player2 ");
+    BotUser player2 = BotUser("weight.txt");
+    
     Player playerList[2]{player1,player2};
     ConnectGame* mainGame = new ConnectGame{playerList,8,8};
     
-    while (mainGame->checkForWin()==nullptr) {
 
-        int columnNum{};
-        int playerNum{};
-        Player* playerChoice =nullptr;
-        do {
-            std::cout << "column: ";
-            std::cin >> columnNum;
-            std::cout << "player: ";
-            std::cin >> playerNum;
-            if (playerNum==1) {
-                playerChoice=&player1;
-            } else {
-                playerChoice=&player2;
-            }
-        } while (!mainGame->dropPiece(columnNum, Piece(*playerChoice)));
-        
+    int columnNum{};
+    int playerNum{0};
+    while (!mainGame->gameIsOver()) {
+        playerNum++;
+        if (playerNum%2==1) {
+            do {
+                std::cout << "column: ";
+                std::cin >> columnNum;
+            } while (!mainGame->dropPiece(columnNum, Piece(player1)));
+        } else {
+            std::cout << mainGame->dropPiece(player2.chooseColumn(mainGame->getBoard()), Piece(player2)); //problem line
+        }
 
         for (int row=7;row>=0;row--) {
             for (int column=0;column<8;column++) {
@@ -42,7 +42,8 @@ int main()
             std::cout << "\n";
         }
     }
-    
+
+    player2.train(false);
 
     delete mainGame;
     

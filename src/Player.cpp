@@ -17,3 +17,5 @@ bool Player::operator==(const Player& comparedPlayer) const
     return (m_id==comparedPlayer.m_id);
 }
 bool Player::operator!=(const Player& comparedPlayer) const {return !(*this == comparedPlayer); }
+
+int Player::getId() const {return m_id;}

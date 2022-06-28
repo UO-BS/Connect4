@@ -14,6 +14,9 @@ private:
     const int m_rowNum;
     int m_turnCount;
     
+    const Player* m_winningPlayer;
+    bool m_gameOver;
+    
     //Helper function to place a piece
     void placePiece(int column, int row, const Piece& newPiece);
 
@@ -22,6 +25,9 @@ private:
     bool checkHorizontalWin(int column, int row) const;
     bool checkUpDiagonalWin(int column, int row) const;
     bool checkDownDiagonalWin(int column, int row) const;
+    bool checkTie() const;
+
+    void checkForWin();
 
     //Functions to cycle game turns
     void cycleTurn();
@@ -43,11 +49,11 @@ public:
 
     bool dropPiece(int column, const Piece& newPiece);
 
-    //Players should outlive the game object, therefore a nullptr return indicates no winner
-    const Player* checkForWin() const;
-
     const int getRowNumber() const;
     const int getColumnNumber() const;
+
+    bool gameIsOver() const;
+    const Player* getWinningPlayer();
 };
 
 #endif

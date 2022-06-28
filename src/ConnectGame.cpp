@@ -3,7 +3,7 @@
 
 
 ConnectGame::ConnectGame(const Player (&players)[2], int columnNumber, int rowNumber) : 
-    m_board{} , m_playerList{players}, m_columnNum{columnNumber} , m_rowNum{rowNumber}, m_turnCount{0}
+    m_board{} , m_playerList{players}, m_columnNum{columnNumber} , m_rowNum{rowNumber}, m_turnCount{0}, m_winningPlayer{nullptr}, m_gameOver{false}
 {
     m_board = new Piece*[m_columnNum];
     for (int i=0;i<m_columnNum;i++) {
@@ -26,6 +26,9 @@ Piece** ConnectGame::getBoard() const
 
 bool ConnectGame::dropPiece(int column, const Piece& newPiece)
 {
+    if (m_gameOver) {
+        return false;
+    }
     if (newPiece.getOwner() != getCurrentTurn()) {
         return false;
     }
@@ -36,16 +39,16 @@ bool ConnectGame::dropPiece(int column, const Piece& newPiece)
     for (int i=m_rowNum-1;i>=0;i--) {
         if (m_board[column][i].isValidPiece()) {
             m_board[column][i+1] = newPiece;
-            cycleTurn();
-            return true;
+            break;
         }
         if (i==0) {
             m_board[column][i] = newPiece;
-            cycleTurn();
-            return true;
+            break;
         }
     }
-    return false; //This should never be reached
+    checkForWin();
+    cycleTurn();
+    return true;
     
 }
 
@@ -202,32 +205,55 @@ bool ConnectGame::checkDownDiagonalWin(int column, int row) const
     if (connectCount>=4) {return true;} else {return false;}
 }
 
-const Player* ConnectGame::checkForWin() const
+bool ConnectGame::checkTie() const
 {
+    for (int column=0;column<m_columnNum;column++) {
+        if (!m_board[column][m_rowNum-1].isValidPiece()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void ConnectGame::checkForWin()
+{
+    if (checkTie()){
+        m_gameOver =true;
+        return;
+    }
+
     for (int column=0;column<m_columnNum;column++) {
         for (int row=0;row<m_rowNum;row++) {
             if (m_board[column][row].isValidPiece())
             {
 
                 if (checkVerticalWin(column, row)){
-                    return &m_board[column][row].getOwner();
+                    m_gameOver =true;
+                    m_winningPlayer = &m_board[column][row].getOwner();
+                    return;
                 }
 
                 if (checkHorizontalWin(column, row)){
-                    return &m_board[column][row].getOwner();
+                    m_gameOver =true;
+                    m_winningPlayer = &m_board[column][row].getOwner();
+                    return;
                 }
 
                 if (checkUpDiagonalWin(column, row)){
-                    return &m_board[column][row].getOwner();
+                    m_gameOver =true;
+                    m_winningPlayer = &m_board[column][row].getOwner();
+                    return;
                 }
 
                 if (checkDownDiagonalWin(column, row)){
-                    return &m_board[column][row].getOwner();
+                    m_gameOver =true;
+                    m_winningPlayer = &m_board[column][row].getOwner();
+                    return;
                 }
             }
         }
     }
-    return nullptr;
+    return;
 }
 
 const int ConnectGame::getRowNumber() const {return m_rowNum;}
@@ -241,4 +267,14 @@ void ConnectGame::cycleTurn()
 const Player& ConnectGame::getCurrentTurn() const
 {
     return m_playerList[m_turnCount%2];
+}
+
+bool ConnectGame::gameIsOver() const
+{
+    return m_gameOver;
+}
+
+const Player* ConnectGame::getWinningPlayer()
+{
+    return m_winningPlayer;
 }
