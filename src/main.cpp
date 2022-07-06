@@ -1,7 +1,6 @@
 #include "Player.h"
 #include "Piece.h"
 #include "ConnectGame.h"
-#include "BotUser.h"
 #include <string>
 #include <iostream>
 #include <limits>
@@ -12,7 +11,7 @@
 int main()
 {
     Player player1 = Player("Player1 ");
-    BotUser player2 = BotUser("weight.txt");
+    Player player2 = Player("Player2");
     
     Player playerList[2]{player1,player2};
     ConnectGame* mainGame = new ConnectGame{playerList,8,8};
@@ -28,7 +27,7 @@ int main()
                 std::cin >> columnNum;
             } while (!mainGame->dropPiece(columnNum, Piece(player1)));
         } else {
-            std::cout << mainGame->dropPiece(player2.chooseColumn(mainGame->getBoard()), Piece(player2)); //problem line
+            std::cout << mainGame->dropPiece(1, Piece(player2)); //problem line
         }
 
         for (int row=7;row>=0;row--) {
@@ -42,8 +41,6 @@ int main()
             std::cout << "\n";
         }
     }
-
-    player2.train(false);
 
     delete mainGame;
     
