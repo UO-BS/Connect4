@@ -9,10 +9,11 @@ class Player
 private:
     std::string m_name;
     static int idGenerator;
+    char m_symbol;
 protected:
     int m_id;   //Might exceed int size
 public:
-    Player(std::string playerName="UnnamedPlayer");
+    Player(char symbol='~', std::string playerName="UnnamedPlayer");
 
     Player(const Player& orig);
 
@@ -21,6 +22,8 @@ public:
 
     bool operator==(const Player& comparedPlayer) const;
     bool operator!=(const Player& comparedPlayer) const;
+
+    const char& getSymbol() const;
 };
 
 #endif

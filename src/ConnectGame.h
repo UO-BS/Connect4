@@ -54,6 +54,10 @@ public:
 
     bool gameIsOver() const;
     const Player* getWinningPlayer();
+    
+    int getTurnNumber() const;
+    
+    void displayBoardToConsole() const;
 };
 
 #endif

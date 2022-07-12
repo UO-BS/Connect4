@@ -10,37 +10,32 @@
 //IMPORTANT NOTE: This is only for testing. The program is currently not usable
 int main()
 {
-    Player player1 = Player("Player1 ");
-    Player player2 = Player("Player2");
+    std::string tempName1;
+    std::string tempName2;
+    std::cout << "Enter the name of Player 1: ";
+    std::cin >> tempName1;
+    std::cout << "Enter the name of Player 2: ";
+    std::cin >> tempName2;
+    Player player1 = Player('1', tempName1);
+    Player player2 = Player('2', tempName2);
     
     Player playerList[2]{player1,player2};
     ConnectGame* mainGame = new ConnectGame{playerList,8,8};
     
-
-    int columnNum{};
-    int playerNum{0};
+    int columnNum{-1};
     while (!mainGame->gameIsOver()) {
-        playerNum++;
-        if (playerNum%2==1) {
-            do {
-                std::cout << "column: ";
-                std::cin >> columnNum;
-            } while (!mainGame->dropPiece(columnNum, Piece(player1)));
-        } else {
-            std::cout << mainGame->dropPiece(1, Piece(player2)); //problem line
-        }
+       
+        mainGame->displayBoardToConsole();
 
-        for (int row=7;row>=0;row--) {
-            for (int column=0;column<8;column++) {
-                if ((mainGame->getBoard())[column][row]) {
-                    std::cout << (mainGame->getBoard())[column][row].getOwner().getName();
-                } else {
-                    std::cout << "NoPiece ";
-                }
-            }
-            std::cout << "\n";
-        }
+        do { 
+            std::cout << "What column do you want to drop a piece?: ";
+            std::cin >> columnNum;
+        } while (!mainGame->dropPiece(columnNum, Piece(playerList[mainGame->getTurnNumber()%2==1])));
+
     }
+    mainGame->displayBoardToConsole();
+
+    std::cout <<mainGame->getWinningPlayer()->getName() <<" has won the game!\n";
 
     delete mainGame;
     

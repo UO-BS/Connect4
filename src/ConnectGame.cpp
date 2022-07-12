@@ -29,6 +29,10 @@ bool ConnectGame::dropPiece(int column, const Piece& newPiece)
     if (m_gameOver) {
         return false;
     }
+    if (column >= m_columnNum || column <= 0) {
+        return false;
+    }
+    column--; //User enters the interval [1,columnnumber], array uses interval [0,columnnumber-1]
     if (newPiece.getOwner() != getCurrentTurn()) {
         return false;
     }
@@ -277,4 +281,23 @@ bool ConnectGame::gameIsOver() const
 const Player* ConnectGame::getWinningPlayer()
 {
     return m_winningPlayer;
+}
+
+int ConnectGame::getTurnNumber() const
+{
+    return m_turnCount;
+}
+
+void ConnectGame::displayBoardToConsole() const
+{
+    for (int row=7;row>=0;row--) {
+            for (int column=0;column<8;column++) {
+                if ((getBoard())[column][row]) {
+                    std::cout <<" "<< (getBoard())[column][row].getOwner().getSymbol()<<" ";
+                } else {
+                    std::cout << " - ";
+                }
+            }
+            std::cout << "\n";
+    }
 }
