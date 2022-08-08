@@ -20,7 +20,7 @@ int main()
     Player player2 = Player('2', tempName2);
     
     Player playerList[2]{player1,player2};
-    ConnectGame* mainGame = new ConnectGame{playerList,8,8};
+    ConnectGame* mainGame = new ConnectGame{playerList,7,6};
     
     int columnNum{-1};
     while (!mainGame->gameIsOver()) {

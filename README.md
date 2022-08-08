@@ -1,5 +1,5 @@
 # LearningCheckersBot
-This project includes the standard game of connect4, and a Learning connect4 bot
+This project includes the standard game of connect4. 
 
 Currently, the Connect4 Game classes are functional and usable in other programs.
 
