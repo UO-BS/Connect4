@@ -22,6 +22,8 @@ public:
 
     bool operator==(const Player& comparedPlayer) const;
     bool operator!=(const Player& comparedPlayer) const;
+    bool operator<(const Player& comparedPlayer) const;
+    bool operator>(const Player& comparedPlayer) const;
 
     const char& getSymbol() const;
 };

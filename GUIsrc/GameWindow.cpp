@@ -5,7 +5,7 @@
 #include "GameWindow.h"
 #include <iostream>
 
-GameWindow::GameWindow(const ConnectGame& newGame) : BaseWindow{}, m_currentGame{newGame}{}
+GameWindow::GameWindow(const ConnectGame& newGame) : BaseWindow{},m_boardWindow{newGame}, m_currentGame{newGame}{}
 
 PCWSTR  GameWindow::className() const { return L"MainWindow"; }
 LRESULT GameWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -18,7 +18,7 @@ LRESULT GameWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         
         m_textHwnd = CreateWindowEx(0, L"STATIC", L"MyLabel", WS_CHILD | WS_VISIBLE, 1000,0,100,100,m_hwnd,(HMENU)2,GetModuleHandle(NULL),NULL);
         //Having different dimensions than the myCircleButton object will crop it
-        m_boardWindow.create(L"MyCircleButton",WS_CHILD | WS_VISIBLE,0,0,0,1000,1000,m_hwnd,(HMENU)1);
+        m_boardWindow.create(L"MyBoardDisplay",WS_CHILD | WS_VISIBLE,0,0,0,1000,1000,m_hwnd,(HMENU)1);
 
         return lRes;
         }

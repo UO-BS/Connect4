@@ -10,10 +10,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
     Player player1 = Player('1');
     Player player2 = Player('2');
     Player playerList[2]{player1,player2};
-    ConnectGame mainGame{playerList,7,6}; 
+    ConnectGame mainGame{playerList,7,6};
     
     
-    GameWindow mainWin{mainGame};
+    GameWindow mainWin{mainGame}; //GameWindows should not outlive the game
 
     if (!mainWin.create(L"My Window", WS_OVERLAPPEDWINDOW))
     {

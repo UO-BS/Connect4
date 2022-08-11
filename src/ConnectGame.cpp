@@ -301,3 +301,8 @@ void ConnectGame::displayBoardToConsole() const
             std::cout << "\n";
     }
 }
+
+const Player* ConnectGame::getPlayerList() const
+{
+    return m_playerList;
+}

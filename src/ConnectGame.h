@@ -58,6 +58,8 @@ public:
     int getTurnNumber() const;
     
     void displayBoardToConsole() const;
+
+    const Player* getPlayerList() const;
 };
 
 #endif
