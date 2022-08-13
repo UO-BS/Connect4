@@ -11,18 +11,29 @@
 class BoardWindow : public BaseWindow<BoardWindow>
 {
 private:
-    //Board Texture
+    //Background Board Texture
     LPCWSTR m_boardPath;
+    //Rect to hold the board image dimensions
     topDownGeometry::Rect m_boardSrcRect;
+    //Rect to hold the resized board dimensions
+    topDownGeometry::Rect m_rescaledBoardRect;
 
-    //Piece Textures
+    //Textures for when a Piece is inside the board, contained in a map because each player has a unique piece
     std::map<Player, std::tuple<LPCWSTR,LPCWSTR,topDownGeometry::Rect>> m_pieceTextures;
-    std::vector<topDownGeometry::Rect> m_destinationRects; //These are in relation to the board texture, scaling down the board will also scale these
+    //Vector of Rects that hold a resizing of the image in order to fit on the board correctly (customizable)
+    std::vector<topDownGeometry::Rect> m_pieceRects;
+    //Vector of Rects that hold the final dimensions for displaying the image
+    std::vector<topDownGeometry::Rect> m_rescaledPieceRects;
 
-    //Column Selection Texture
-    std::vector<topDownGeometry::Rect> m_columnRects; //These are in relation to the board texture, scaling down the board will also scale these
-    LPCWSTR m_selectionPath;                    
-    topDownGeometry::Rect m_selectionSrcRect; //These are in relation to the board texture, scaling down the board will also scale these
+    //Column Selection Texture (goes above the selected column)
+    LPCWSTR m_selectionPath;
+    //Rect to hold the Column Selection image dimensions
+    topDownGeometry::Rect m_selectionSrcRect;
+    //Vector of Rects that hold the "hover zone" for each column to be selected (customizable)
+    std::vector<topDownGeometry::Rect> m_columnRects;
+    //Vector of Rects that hold the final dimensions for the "hover zone" of each column
+    std::vector<topDownGeometry::Rect> m_rescaledColumnRects;
+    
 
     //CurrentGame
     const ConnectGame& m_currentGame;
@@ -39,15 +50,16 @@ public:
     void setBoardTexture(LPCWSTR boardPath, topDownGeometry::Rect srcRect);
 
     void addPieceTexture(Player player, LPCWSTR colorPath, LPCWSTR maskPath, int srcHeight, int srcWidth);
-    bool setPieceDestinationRects(std::vector<topDownGeometry::Rect> newRects);
-    //bool setPieceDestinationRects(std::vector<?> newRects); NEEDS TO AVOID USING MY GEOMETRY
+    //void addPieceTexture(Player player, LPCWSTR colorPath, LPCWSTR maskPath, topDownGeometry::Rect srcRect);
+    bool setPieceRects(std::vector<topDownGeometry::Rect> newRects);
+    //bool setPieceRects(std::vector<?> newRects); NEEDS TO AVOID USING MY GEOMETRY
 
     void setColumnSelectionTexture(LPCWSTR selectionPath, int srcHeight, int srcWidth);
     void setColumnSelectionTexture(LPCWSTR selectionPath, topDownGeometry::Rect srcRect);
     bool setColumnSelectionRects(std::vector<topDownGeometry::Rect> newRects);
     //bool setColumnSelectionRects(std::vector<?> newRects); NEEDS TO AVOID USING MY GEOMETRY
 
-    void rescaleAllTextureRects(); //NOT DONE YET
+    void resizeAllRects(int windowWidth, int windowHeight);
 };
 
 #endif

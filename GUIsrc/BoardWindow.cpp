@@ -25,7 +25,13 @@ LRESULT BoardWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
     case WM_LBUTTONDOWN:
-        
+        if (GetParent(m_hwnd) != NULL) {
+            SendMessage(GetParent(m_hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(m_hwnd), WM_LBUTTONDOWN), (LPARAM)m_hwnd);
+        }
+        return 0;
+
+    case WM_SIZE:
+        resizeAllRects(LOWORD(lParam),HIWORD(lParam));
         return 0;
         
     case WM_PAINT:
@@ -60,12 +66,14 @@ LRESULT BoardWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 void BoardWindow::setBoardTexture(LPCWSTR boardPath, int srcHeight, int srcWidth)
 {
     m_boardSrcRect = topDownGeometry::Rect{topDownGeometry::Point{0,0}, srcWidth, srcHeight};
+    m_rescaledBoardRect = m_boardSrcRect;
     m_boardPath = boardPath;
 }
 
 void BoardWindow::setBoardTexture(LPCWSTR boardPath, topDownGeometry::Rect srcRect)
 {
    m_boardSrcRect = srcRect;
+   m_rescaledBoardRect = m_boardSrcRect;
    m_boardPath = boardPath;
 }
 
@@ -78,7 +86,7 @@ void BoardWindow::addPieceTexture(Player player, LPCWSTR colorPath, LPCWSTR mask
     m_pieceTextures.insert({player,textureData});
 }
 
-bool BoardWindow::setPieceDestinationRects(std::vector<topDownGeometry::Rect> newRects)
+bool BoardWindow::setPieceRects(std::vector<topDownGeometry::Rect> newRects)
 {
     //This does not check if they overlap each other
     if (newRects.size() != m_currentGame.getColumnNumber()*m_currentGame.getRowNumber()) {
@@ -89,7 +97,8 @@ bool BoardWindow::setPieceDestinationRects(std::vector<topDownGeometry::Rect> ne
             return false;
         }
     }
-    m_destinationRects = newRects;
+    m_pieceRects = newRects;
+    m_rescaledPieceRects = m_pieceRects;
     return true;
 }
 
@@ -115,6 +124,7 @@ bool BoardWindow::setColumnSelectionRects(std::vector<topDownGeometry::Rect> new
         }
     }
     m_columnRects = newRects;
+    m_rescaledColumnRects = m_columnRects;
     return true;
 }
 
@@ -132,7 +142,7 @@ void BoardWindow::useDefaultTextures()
             newRects.push_back(topDownGeometry::Rect{topDownGeometry::Point{j*100,i*100},100,100});
         }
     }
-    setPieceDestinationRects(newRects);
+    setPieceRects(newRects);
 
     setColumnSelectionTexture(L"../resources/defaultSelection.bmp",topDownGeometry::Rect{topDownGeometry::Point{0,0},100,100});
     std::vector<topDownGeometry::Rect> newColumns;
@@ -140,7 +150,29 @@ void BoardWindow::useDefaultTextures()
     newColumns.reserve(m_currentGame.getColumnNumber());
     GetClientRect(m_hwnd,rcClient);
     for (int i=0;i<m_currentGame.getColumnNumber();i++) {
-        newColumns[i] = topDownGeometry::Rect{topDownGeometry::Point{i*m_boardSrcRect.getWidth()/m_currentGame.getColumnNumber(),0},m_boardSrcRect.getWidth()/m_currentGame.getColumnNumber(),m_boardSrcRect.getHeight()};
+        newColumns.push_back(topDownGeometry::Rect{topDownGeometry::Point{i*m_boardSrcRect.getWidth()/m_currentGame.getColumnNumber(),0},m_boardSrcRect.getWidth()/m_currentGame.getColumnNumber(),m_boardSrcRect.getHeight()});
     }
     setColumnSelectionRects(newColumns);
+}
+
+void BoardWindow::resizeAllRects(int windowWidth, int windowHeight)
+{
+    int topLimit = windowHeight/8 +1; //+1 to make sure the textures dont overlap
+
+    //Resize m_rescaledBoardRect 
+    topDownGeometry::Rect newBoardRect{topDownGeometry::Point{0,topLimit},windowWidth,windowHeight-topLimit};
+    m_rescaledBoardRect.transformRect(m_boardSrcRect, newBoardRect);
+    
+    //Resize m_rescaledPieceRects based on the resized board
+    for (int i=0;i<m_currentGame.getColumnNumber();i++) {
+        for (int j=0;j<m_currentGame.getRowNumber();j++) {
+            m_rescaledPieceRects[i*m_currentGame.getRowNumber()+j].transformRect(m_boardSrcRect, newBoardRect);
+        }
+    }
+
+    //Resize m_rescaledColumnRects based on the resized board
+    for (int i=0;i<m_currentGame.getColumnNumber();i++) {
+        m_rescaledColumnRects[i].transformRect(m_boardSrcRect, newBoardRect);
+    }
+
 }

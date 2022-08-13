@@ -15,6 +15,8 @@ public:
     
     int getX() const {return x;}
     int getY() const {return y;}
+
+    void movePoint(int xChange, int yChange) {x+=xChange; y+=yChange;}
 };
 
 //TopDownRectangle
@@ -65,12 +67,55 @@ public:
         return true;
     }
 
+    void recalculateDimensions()
+    {
+        rectWidth = bottomRight.getX()- topLeft.getX();
+        rectHeight = bottomRight.getY()- topLeft.getY();
+    }
+
+    void moveRectangle(int xValue, int yValue)
+    {
+        topLeft.movePoint(xValue,yValue);
+        topRight.movePoint(xValue,yValue);
+        bottomLeft.movePoint(xValue,yValue);
+        bottomRight.movePoint(xValue,yValue);
+    }
+
     Point getTopLeft() const {return topLeft;}
     Point getBottomLeft() const {return bottomLeft;}
     Point getTopRight() const {return topRight;}
     Point getBottomRight() const {return bottomRight;}
     int getHeight() const {return rectHeight;}
     int getWidth() const {return rectWidth;}
+
+    bool transformRect(Rect oldEncompassingRect, Rect newEncompassingRect)
+    {
+        if (!oldEncompassingRect.rectInRect(*this)) {
+            return false;
+        }
+        
+        double xScalingFactor = static_cast<double>(newEncompassingRect.getWidth())/static_cast<double>(oldEncompassingRect.getWidth());
+        double yScalingFactor = static_cast<double>(newEncompassingRect.getHeight())/static_cast<double>(oldEncompassingRect.getHeight());
+
+        //Calculate distances between oldEncompassingRect walls and this Rect's walls
+        double leftWallDistance = (this->topLeft.getX()-oldEncompassingRect.topLeft.getX());
+        double rightWallDistance = (this->topRight.getX()-oldEncompassingRect.topLeft.getX());
+        double topWallDistance = (this->topLeft.getY()-oldEncompassingRect.topLeft.getY());
+        double bottomWallDistance = (this->bottomLeft.getY()-oldEncompassingRect.topLeft.getY());
+
+        //Apply transformation
+        topLeft.movePoint(static_cast<int>(leftWallDistance*xScalingFactor-leftWallDistance),static_cast<int>(topWallDistance*yScalingFactor-topWallDistance));
+        bottomLeft.movePoint(static_cast<int>(leftWallDistance*xScalingFactor-leftWallDistance),static_cast<int>(bottomWallDistance*yScalingFactor-bottomWallDistance));
+        topRight.movePoint(static_cast<int>(rightWallDistance*xScalingFactor-rightWallDistance),static_cast<int>(topWallDistance*yScalingFactor-topWallDistance));
+        bottomRight.movePoint(static_cast<int>(rightWallDistance*xScalingFactor-rightWallDistance),static_cast<int>(bottomWallDistance*yScalingFactor-bottomWallDistance));
+
+        //Apply translations
+        moveRectangle(newEncompassingRect.topLeft.getX()-oldEncompassingRect.topLeft.getX(),newEncompassingRect.topLeft.getY()-oldEncompassingRect.topLeft.getY());
+
+        recalculateDimensions();
+        return true;
+    }
+
 };
 
 }
