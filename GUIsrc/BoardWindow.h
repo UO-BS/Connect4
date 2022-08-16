@@ -37,6 +37,12 @@ private:
 
     //CurrentGame
     const ConnectGame& m_currentGame;
+
+    //Helper functions
+    void paintBoard(const HDC& hdc);
+    void paintPieces(const HDC& hdc);
+    void paintSelection(const HDC& hdc);
+
 public:
     PCWSTR  className() const;
     LRESULT handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);

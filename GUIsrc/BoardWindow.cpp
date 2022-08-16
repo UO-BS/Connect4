@@ -39,19 +39,8 @@ LRESULT BoardWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(m_hwnd, &ps);
             
-            HBITMAP bmp = (HBITMAP) LoadImage(NULL,m_boardPath,IMAGE_BITMAP,m_boardSrcRect.getWidth(),m_boardSrcRect.getHeight(),LR_LOADFROMFILE);
-            if (!bmp) {
-                std::cout << "Error Loading .bmp file: " << GetLastError() << "\n";
-                std::cout << "Image path: " << m_boardPath << "\n";
-            }
-            HDC tempDC = CreateCompatibleDC(hdc);
-            HGDIOBJ replacedOBJ = SelectObject(tempDC, bmp);
-            BitBlt(hdc,0,100,m_boardSrcRect.getWidth(),m_boardSrcRect.getHeight(),tempDC,0,0,SRCCOPY);
-            //StretchBlt(hdc,0,0,100,75,tempDC,0,0,m_srcWidth,m_srcHeight,SRCCOPY);
-            //Draw pieces and selection
-            SelectObject(tempDC, replacedOBJ);
-            DeleteObject(bmp);
-            DeleteDC(tempDC);
+            paintBoard(hdc);
+            paintPieces(hdc);
 
             EndPaint(m_hwnd, &ps);
         }
@@ -61,6 +50,68 @@ LRESULT BoardWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(m_hwnd, uMsg, wParam, lParam);
     }
     return TRUE;
+}
+
+void BoardWindow::paintBoard(const HDC& hdc)
+{
+    HBITMAP bmp = (HBITMAP) LoadImage(NULL,m_boardPath,IMAGE_BITMAP,m_boardSrcRect.getWidth(),m_boardSrcRect.getHeight(),LR_LOADFROMFILE);
+    if (!bmp) {
+        std::cout << "Error Loading .bmp file: " << GetLastError() << "\n";
+        std::cout << "Image path: " << m_boardPath << "\n";
+    }
+    HDC tempDC = CreateCompatibleDC(hdc);
+    HGDIOBJ replacedOBJ = SelectObject(tempDC, bmp);
+    StretchBlt(hdc,m_rescaledBoardRect.getTopLeft().getX(),m_rescaledBoardRect.getTopLeft().getY(),
+                m_rescaledBoardRect.getWidth(),m_rescaledBoardRect.getHeight(),tempDC,
+                0,0,m_boardSrcRect.getWidth(),m_boardSrcRect.getHeight(),SRCCOPY);
+    SelectObject(tempDC, replacedOBJ);
+    DeleteObject(bmp);
+    DeleteDC(tempDC);
+}
+void BoardWindow::paintPieces(const HDC& hdc)
+{
+    HDC tempDC = CreateCompatibleDC(hdc);
+
+    for (int playerNum=0;playerNum<m_pieceTextures.size();playerNum++) {
+        std::tuple<LPCWSTR,LPCWSTR,topDownGeometry::Rect> playerData = m_pieceTextures.find(m_currentGame.getPlayerList()[playerNum])->second;
+        HBITMAP bmp = (HBITMAP) LoadImage(NULL,std::get<0>(playerData),IMAGE_BITMAP,std::get<2>(playerData).getWidth(),std::get<2>(playerData).getHeight(),LR_LOADFROMFILE);
+        HBITMAP bmpMask = (HBITMAP) LoadImage(NULL,std::get<1>(playerData),IMAGE_BITMAP,std::get<2>(playerData).getWidth(),std::get<2>(playerData).getHeight(),LR_LOADFROMFILE);
+        if (!bmp || !bmpMask) {
+            std::cout << "Error Loading .bmp file: " << GetLastError() << "\n";
+            std::cout << "Piece Image failed to load";
+        }
+        HGDIOBJ replacedOBJ = SelectObject(tempDC, bmpMask);
+
+        for (int row=0;row<m_currentGame.getRowNumber();row++) {
+            for (int column=0;column<m_currentGame.getColumnNumber();column++) {
+                if (m_currentGame.getBoard()[row][column]) {
+                    if (m_currentGame.getBoard()[row][column].getOwner() == m_currentGame.getPlayerList()[playerNum]) {
+                    
+                    topDownGeometry::Rect destination = m_rescaledPieceRects[row*m_currentGame.getColumnNumber()+column];
+                    
+                    StretchBlt(hdc,destination.getTopLeft().getX(),destination.getTopLeft().getY(),
+                                destination.getWidth(),destination.getHeight(),tempDC,
+                                0,0,std::get<2>(playerData).getWidth(),std::get<2>(playerData).getHeight(),SRCAND);
+                    SelectObject(tempDC, bmp);
+                    StretchBlt(hdc,destination.getTopLeft().getX(),destination.getTopLeft().getY(),
+                                destination.getWidth(),destination.getHeight(),tempDC,
+                                0,0,std::get<2>(playerData).getWidth(),std::get<2>(playerData).getHeight(),SRCPAINT);
+                    }
+                }
+            }
+        }
+
+        SelectObject(tempDC, replacedOBJ);
+        DeleteObject(bmp);
+        DeleteObject(bmpMask);
+    }
+    
+    DeleteDC(tempDC);
+}
+
+void BoardWindow::paintSelection(const HDC& hdc)
+{
+
 }
 
 void BoardWindow::setBoardTexture(LPCWSTR boardPath, int srcHeight, int srcWidth)
@@ -137,12 +188,15 @@ void BoardWindow::useDefaultTextures()
     
     std::vector<topDownGeometry::Rect> newRects;
     newRects.reserve(m_currentGame.getRowNumber()*m_currentGame.getColumnNumber());
-    for (int i=0;i<m_currentGame.getColumnNumber();i++) {
-        for (int j=0;j<m_currentGame.getRowNumber();j++) {
-            newRects.push_back(topDownGeometry::Rect{topDownGeometry::Point{j*100,i*100},100,100});
+    for (int row=0;row<m_currentGame.getRowNumber();row++) {
+        for (int column=0;column<m_currentGame.getColumnNumber();column++) {
+            newRects.push_back(topDownGeometry::Rect{topDownGeometry::Point{50+column*100,50+row*100},100,100});
         }
     }
-    setPieceRects(newRects);
+    if (!setPieceRects(newRects)) {
+        std::cout << "Set Piece Failed";
+    }
+    
 
     setColumnSelectionTexture(L"../resources/defaultSelection.bmp",topDownGeometry::Rect{topDownGeometry::Point{0,0},100,100});
     std::vector<topDownGeometry::Rect> newColumns;
@@ -152,7 +206,9 @@ void BoardWindow::useDefaultTextures()
     for (int i=0;i<m_currentGame.getColumnNumber();i++) {
         newColumns.push_back(topDownGeometry::Rect{topDownGeometry::Point{i*m_boardSrcRect.getWidth()/m_currentGame.getColumnNumber(),0},m_boardSrcRect.getWidth()/m_currentGame.getColumnNumber(),m_boardSrcRect.getHeight()});
     }
-    setColumnSelectionRects(newColumns);
+    if (!setColumnSelectionRects(newColumns)) {
+        std::cout << "Set ColumnSelection Failed";
+    }
 }
 
 void BoardWindow::resizeAllRects(int windowWidth, int windowHeight)

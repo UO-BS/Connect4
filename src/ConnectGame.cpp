@@ -5,15 +5,15 @@
 ConnectGame::ConnectGame(const Player (&players)[2], int columnNumber, int rowNumber) : 
     m_board{} , m_playerList{players}, m_columnNum{columnNumber} , m_rowNum{rowNumber}, m_turnCount{0}, m_winningPlayer{nullptr}, m_gameOver{false}
 {
-    m_board = new Piece*[m_columnNum];
-    for (int i=0;i<m_columnNum;i++) {
-        m_board[i] = new Piece[m_rowNum];
+    m_board = new Piece*[m_rowNum];
+    for (int i=0;i<m_rowNum;i++) {
+        m_board[i] = new Piece[m_columnNum];
     }
 }
 
 ConnectGame::~ConnectGame() 
 {
-   for (int i=0;i<m_columnNum;i++) {
+   for (int i=0;i<m_rowNum;i++) {
         delete[] m_board[i];
    }
    delete[] m_board;
@@ -26,27 +26,31 @@ Piece** ConnectGame::getBoard() const
 
 bool ConnectGame::dropPiece(int column, const Piece& newPiece)
 {
+    //Cannot drop piece if game is over
     if (m_gameOver) {
         return false;
     }
-    if (column >= m_columnNum || column <= 0) {
+    //Cannot drop piece outside of board
+    if (column > m_columnNum || column <= 0) {
         return false;
     }
     column--; //User enters the interval [1,columnnumber], array uses interval [0,columnnumber-1]
+    //Cannot drop piece if it is not your turn
     if (newPiece.getOwner() != getCurrentTurn()) {
         return false;
     }
-    if (m_board[column][m_rowNum-1].isValidPiece()) {
-        //THE COLUMN IS FULL, CURRENTLY NOT HANDLED
+    //Cannot drop piece if the column is full
+    if (m_board[0][column].isValidPiece()) {
         return false;
     }
-    for (int i=m_rowNum-1;i>=0;i--) {
-        if (m_board[column][i].isValidPiece()) {
-            m_board[column][i+1] = newPiece;
+    //Search the column (top to bottom) for where to place the piece
+    for (int i=1;i<m_rowNum;i++) {
+        if (m_board[i][column].isValidPiece()) {
+            m_board[i-1][column] = newPiece;
             break;
         }
-        if (i==0) {
-            m_board[column][i] = newPiece;
+        if (i==m_rowNum-1) {
+            m_board[i][column] = newPiece;
             break;
         }
     }
@@ -65,10 +69,10 @@ bool ConnectGame::checkVerticalWin(int column, int row) const
         if (row+moveCounter >= m_rowNum) {
             break;
         }
-        else if (!m_board[column][row+moveCounter]) {
+        else if (!m_board[row+moveCounter][column]) {
             break;
         }
-        else if (m_board[column][row+moveCounter].getOwner() != m_board[column][row].getOwner()) {
+        else if (m_board[row+moveCounter][column].getOwner() != m_board[row][column].getOwner()) {
             break;
         }
         moveCounter++;
@@ -81,10 +85,10 @@ bool ConnectGame::checkVerticalWin(int column, int row) const
         if (row-moveCounter < 0) {
             break;
         }
-        else if (!m_board[column][row-moveCounter].isValidPiece()) {
+        else if (!m_board[row-moveCounter][column].isValidPiece()) {
             break;
         }
-        else if (m_board[column][row-moveCounter].getOwner() != m_board[column][row].getOwner()) {
+        else if (m_board[row-moveCounter][column].getOwner() != m_board[row][column].getOwner()) {
             break;
         }
         moveCounter++;
@@ -104,10 +108,10 @@ bool ConnectGame::checkHorizontalWin(int column, int row) const
         if (column+moveCounter >= m_columnNum) {
             break;
         }
-        else if (!m_board[column+moveCounter][row].isValidPiece()) {
+        else if (!m_board[row][column+moveCounter].isValidPiece()) {
             break;
         }
-        else if (m_board[column+moveCounter][row].getOwner() != m_board[column][row].getOwner()) {
+        else if (m_board[row][column+moveCounter].getOwner() != m_board[row][column].getOwner()) {
             break;
         }
         moveCounter++;
@@ -120,48 +124,10 @@ bool ConnectGame::checkHorizontalWin(int column, int row) const
         if (column-moveCounter < 0) {
             break;
         }
-        else if (!m_board[column-moveCounter][row].isValidPiece()) {
+        else if (!m_board[row][column-moveCounter].isValidPiece()) {
             break;
         }
-        else if (m_board[column-moveCounter][row].getOwner() != m_board[column][row].getOwner()) {
-            break;
-        }
-        moveCounter++;
-        connectCount++;
-    } 
-
-    if (connectCount>=4) {return true;} else {return false;}
-}
-
-bool ConnectGame::checkUpDiagonalWin(int column, int row) const
-{
-    int connectCount{1};
-    int moveCounter{1};
-
-    while (true) {
-        if (column+moveCounter >= m_columnNum || row+moveCounter >= m_rowNum) {
-            break;
-        }
-        else if (!m_board[column+moveCounter][row+moveCounter].isValidPiece()) {
-            break;
-        }
-        else if (m_board[column+moveCounter][row+moveCounter].getOwner() != m_board[column][row].getOwner()) {
-            break;
-        }
-        moveCounter++;
-        connectCount++;
-    } 
-    
-    moveCounter=1;
-    
-    while (true) {
-        if (column-moveCounter < 0 || row-moveCounter < 0) {
-            break;
-        }
-        else if (!m_board[column-moveCounter][row-moveCounter].isValidPiece()) {
-            break;
-        }
-        else if (m_board[column-moveCounter][row-moveCounter].getOwner() != m_board[column][row].getOwner()) {
+        else if (m_board[row][column-moveCounter].getOwner() != m_board[row][column].getOwner()) {
             break;
         }
         moveCounter++;
@@ -177,13 +143,51 @@ bool ConnectGame::checkDownDiagonalWin(int column, int row) const
     int moveCounter{1};
 
     while (true) {
+        if (column+moveCounter >= m_columnNum || row+moveCounter >= m_rowNum) {
+            break;
+        }
+        else if (!m_board[row+moveCounter][column+moveCounter].isValidPiece()) {
+            break;
+        }
+        else if (m_board[row+moveCounter][column+moveCounter].getOwner() != m_board[row][column].getOwner()) {
+            break;
+        }
+        moveCounter++;
+        connectCount++;
+    } 
+    
+    moveCounter=1;
+    
+    while (true) {
+        if (column-moveCounter < 0 || row-moveCounter < 0) {
+            break;
+        }
+        else if (!m_board[row-moveCounter][column-moveCounter].isValidPiece()) {
+            break;
+        }
+        else if (m_board[row-moveCounter][column-moveCounter].getOwner() != m_board[row][column].getOwner()) {
+            break;
+        }
+        moveCounter++;
+        connectCount++;
+    } 
+
+    if (connectCount>=4) {return true;} else {return false;}
+}
+
+bool ConnectGame::checkUpDiagonalWin(int column, int row) const
+{
+    int connectCount{1};
+    int moveCounter{1};
+
+    while (true) {
         if (column+moveCounter >= m_columnNum || row-moveCounter < 0) {
             break;
         }
-        else if (!m_board[column+moveCounter][row-moveCounter].isValidPiece()) {
+        else if (!m_board[row-moveCounter][column+moveCounter].isValidPiece()) {
             break;
         }
-        else if (m_board[column+moveCounter][row-moveCounter].getOwner() != m_board[column][row].getOwner()) {
+        else if (m_board[row-moveCounter][column+moveCounter].getOwner() != m_board[row][column].getOwner()) {
             break;
         }
         moveCounter++;
@@ -196,10 +200,10 @@ bool ConnectGame::checkDownDiagonalWin(int column, int row) const
         if (column-moveCounter < 0 || row+moveCounter >= m_rowNum) {
             break;
         }
-        else if (!m_board[column-moveCounter][row+moveCounter].isValidPiece()) {
+        else if (!m_board[row+moveCounter][column-moveCounter].isValidPiece()) {
             break;
         }
-        else if (m_board[column-moveCounter][row+moveCounter].getOwner() != m_board[column][row].getOwner()) {
+        else if (m_board[row+moveCounter][column-moveCounter].getOwner() != m_board[row][column].getOwner()) {
             break;
         }
         moveCounter++;
@@ -212,7 +216,7 @@ bool ConnectGame::checkDownDiagonalWin(int column, int row) const
 bool ConnectGame::checkTie() const
 {
     for (int column=0;column<m_columnNum;column++) {
-        if (!m_board[column][m_rowNum-1].isValidPiece()) {
+        if (!m_board[0][column].isValidPiece()) {
             return false;
         }
     }
@@ -226,32 +230,32 @@ void ConnectGame::checkForWin()
         return;
     }
 
-    for (int column=0;column<m_columnNum;column++) {
-        for (int row=0;row<m_rowNum;row++) {
-            if (m_board[column][row].isValidPiece())
+    for (int row=0;row<m_rowNum;row++) {
+        for (int column=0;column<m_columnNum;column++) {
+            if (m_board[row][column].isValidPiece())
             {
 
                 if (checkVerticalWin(column, row)){
                     m_gameOver =true;
-                    m_winningPlayer = &m_board[column][row].getOwner();
+                    m_winningPlayer = &m_board[row][column].getOwner();
                     return;
                 }
 
                 if (checkHorizontalWin(column, row)){
                     m_gameOver =true;
-                    m_winningPlayer = &m_board[column][row].getOwner();
+                    m_winningPlayer = &m_board[row][column].getOwner();
                     return;
                 }
 
                 if (checkUpDiagonalWin(column, row)){
                     m_gameOver =true;
-                    m_winningPlayer = &m_board[column][row].getOwner();
+                    m_winningPlayer = &m_board[row][column].getOwner();
                     return;
                 }
 
                 if (checkDownDiagonalWin(column, row)){
                     m_gameOver =true;
-                    m_winningPlayer = &m_board[column][row].getOwner();
+                    m_winningPlayer = &m_board[row][column].getOwner();
                     return;
                 }
             }
@@ -290,15 +294,15 @@ int ConnectGame::getTurnNumber() const
 
 void ConnectGame::displayBoardToConsole() const
 {
-    for (int row=7;row>=0;row--) {
-            for (int column=0;column<8;column++) {
-                if ((getBoard())[column][row]) {
-                    std::cout <<" "<< (getBoard())[column][row].getOwner().getSymbol()<<" ";
-                } else {
-                    std::cout << " - ";
-                }
+    for (int row=0;row<m_rowNum;row++) {
+        for (int column=0;column<m_columnNum;column++) {
+            if ((getBoard())[row][column]) {
+                std::cout <<" "<< (getBoard())[row][column].getOwner().getSymbol()<<" ";
+            } else {
+                std::cout << " - ";
             }
-            std::cout << "\n";
+        }
+        std::cout << "\n";
     }
 }
 

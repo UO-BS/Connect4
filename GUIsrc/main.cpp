@@ -13,6 +13,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
     ConnectGame mainGame{playerList,7,6};
     
     
+
+    mainGame.dropPiece(1,Piece{player1}); //TESTING PURPOSES ONLY
+    mainGame.dropPiece(7,Piece{player2}); //TESTING PURPOSES ONLY
+
     GameWindow mainWin{mainGame}; //GameWindows should not outlive the game
 
     if (!mainWin.create(L"My Window", WS_OVERLAPPEDWINDOW))
