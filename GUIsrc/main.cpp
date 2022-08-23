@@ -7,8 +7,8 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, int nCmdShow)
 {
-    Player player1 = Player('1');
-    Player player2 = Player('2');
+    Player player1 = Player('1',"Player1");
+    Player player2 = Player('2',"Player2");
     Player playerList[2]{player1,player2};
     ConnectGame mainGame{playerList,7,6};
 

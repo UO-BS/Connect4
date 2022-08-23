@@ -8,9 +8,9 @@ The relevant files include: ConnectGame.cpp, ConnectGame.h, Piece.cpp, Piece.h, 
 
 To run the Demo:
 
-Windows Graphical version: Currently in development...
+Windows Graphical version: Download "bin" and "resources" folder and run mainGUI.exe.
 
-Windows System: run main.exe from bin folder.
+Windows System: Download and run main.exe (from the bin folder).
 
 Linux System: compile .cpp files, then run the generated executable from terminal.
 

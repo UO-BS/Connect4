@@ -5,7 +5,7 @@
 #include "GameWindow.h"
 #include <iostream>
 
-GameWindow::GameWindow(ConnectGame& newGame) : BaseWindow{},m_boardWindow{newGame}, m_currentGame{newGame}{}
+GameWindow::GameWindow(ConnectGame& newGame) : BaseWindow{},m_boardWindow{newGame}, m_currentGame{newGame},m_textWindow{5,false} {}
 
 PCWSTR  GameWindow::className() const { return L"MainWindow"; }
 LRESULT GameWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -16,8 +16,7 @@ LRESULT GameWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
         LRESULT lRes = DefWindowProc(m_hwnd, uMsg, wParam, lParam);
         
-        m_textHwnd = CreateWindowEx(0, L"STATIC", L"MyLabel", WS_CHILD | WS_VISIBLE, 1000,0,100,100,m_hwnd,(HMENU)2,GetModuleHandle(NULL),NULL);
-        //Having different dimensions than the myCircleButton object will crop it
+        m_textWindow.create(L"MyFadingText", WS_CHILD | WS_VISIBLE,0,1000,0,100,100,m_hwnd,(HMENU)2);
         m_boardWindow.create(L"MyBoardDisplay",WS_CHILD | WS_VISIBLE,0,0,0,1000,1000,m_hwnd,(HMENU)1);
 
         return lRes;
@@ -32,7 +31,7 @@ LRESULT GameWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
             bool result;
 
-            result = MoveWindow(m_textHwnd,windowWidth*(2.0/3.0)+1,0,windowWidth*(1.0/3.0),windowHeight,TRUE);
+            result = MoveWindow(m_textWindow.getHandle(),windowWidth*(9.0/12.0),windowHeight*(1.0/3.0),windowWidth*(2.0/12.0),windowHeight*(1.0/3.0),TRUE);
             if (!result) {
                 return 1;
             }
@@ -53,8 +52,14 @@ LRESULT GameWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_COMMAND:
         switch(LOWORD(wParam)){
-            case 1: //If message was from 1 control
-                std::cout << "1";
+            case 1:
+                if (HIWORD(wParam) == WM_LBUTTONDOWN) {
+                    if (m_currentGame.gameIsOver()) {
+                        m_textWindow.addText(m_currentGame.getWinningPlayer()->getName()+" has won the game!");
+                    } else {
+                        m_textWindow.addText("It is now "+m_currentGame.getCurrentTurn().getName()+"'s turn to place a piece.");
+                    }
+                }
                 break;
         }
         return 0;
@@ -81,9 +86,4 @@ LRESULT GameWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(m_hwnd, uMsg, wParam, lParam);
     }
     return TRUE;
-}
-
-void GameWindow::setOutputText(LPCSTR newText)
-{
-    SetWindowTextA(m_textHwnd,newText);
 }
