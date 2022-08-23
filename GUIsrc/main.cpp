@@ -11,11 +11,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
     Player player2 = Player('2');
     Player playerList[2]{player1,player2};
     ConnectGame mainGame{playerList,7,6};
-    
-    
 
-    mainGame.dropPiece(1,Piece{player1}); //TESTING PURPOSES ONLY
-    mainGame.dropPiece(7,Piece{player2}); //TESTING PURPOSES ONLY
 
     GameWindow mainWin{mainGame}; //GameWindows should not outlive the game
 

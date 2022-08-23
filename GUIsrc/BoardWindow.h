@@ -34,9 +34,11 @@ private:
     //Vector of Rects that hold the final dimensions for the "hover zone" of each column
     std::vector<topDownGeometry::Rect> m_rescaledColumnRects;
     
+    //Tracking variable
+    int m_hoveredColumn = -1; //-1 is no column, 0,1,2 etc... is the column number
 
     //CurrentGame
-    const ConnectGame& m_currentGame;
+    ConnectGame& m_currentGame;
 
     //Helper functions
     void paintBoard(const HDC& hdc);
@@ -48,7 +50,7 @@ public:
     LRESULT handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     BoardWindow()=delete;
-    BoardWindow(const ConnectGame& newGame, bool useDefaults=true);
+    BoardWindow(ConnectGame& newGame, bool useDefaults=true);
 
     void useDefaultTextures();
 
@@ -65,7 +67,7 @@ public:
     bool setColumnSelectionRects(std::vector<topDownGeometry::Rect> newRects);
     //bool setColumnSelectionRects(std::vector<?> newRects); NEEDS TO AVOID USING MY GEOMETRY
 
-    void resizeAllRects(int windowWidth, int windowHeight);
+    void resizeAllRects(int windowWidth, int windowHeight, bool maintainRatio=false);
 };
 
 #endif

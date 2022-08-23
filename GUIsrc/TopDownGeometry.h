@@ -1,6 +1,8 @@
 #ifndef TOP_DOWN_GEOMETRY_H
 #define TOP_DOWN_GEOMETRY_H
 
+#include <iostream>
+
 namespace topDownGeometry
 {
 
@@ -17,6 +19,11 @@ public:
     int getY() const {return y;}
 
     void movePoint(int xChange, int yChange) {x+=xChange; y+=yChange;}
+    friend std::ostream& operator<< (std::ostream& out, const Point& point)
+    {
+        out << "Point(" << point.x << ", " << point.y << ')';
+        return out;
+    }
 };
 
 //TopDownRectangle
@@ -88,10 +95,12 @@ public:
     int getHeight() const {return rectHeight;}
     int getWidth() const {return rectWidth;}
 
-    bool transformRect(Rect oldEncompassingRect, Rect newEncompassingRect)
+    Rect transformRect(Rect oldEncompassingRect, Rect newEncompassingRect)
     {
+        //Does not apply a transformation if the rectangle is not encompassing
+        Rect resultRect{*this};
         if (!oldEncompassingRect.rectInRect(*this)) {
-            return false;
+            return resultRect;
         }
         
         double xScalingFactor = static_cast<double>(newEncompassingRect.getWidth())/static_cast<double>(oldEncompassingRect.getWidth());
@@ -104,16 +113,22 @@ public:
         double bottomWallDistance = (this->bottomLeft.getY()-oldEncompassingRect.topLeft.getY());
 
         //Apply transformation
-        topLeft.movePoint(static_cast<int>(leftWallDistance*xScalingFactor-leftWallDistance),static_cast<int>(topWallDistance*yScalingFactor-topWallDistance));
-        bottomLeft.movePoint(static_cast<int>(leftWallDistance*xScalingFactor-leftWallDistance),static_cast<int>(bottomWallDistance*yScalingFactor-bottomWallDistance));
-        topRight.movePoint(static_cast<int>(rightWallDistance*xScalingFactor-rightWallDistance),static_cast<int>(topWallDistance*yScalingFactor-topWallDistance));
-        bottomRight.movePoint(static_cast<int>(rightWallDistance*xScalingFactor-rightWallDistance),static_cast<int>(bottomWallDistance*yScalingFactor-bottomWallDistance));
+        resultRect.topLeft.movePoint(static_cast<int>(leftWallDistance*xScalingFactor-leftWallDistance),static_cast<int>(topWallDistance*yScalingFactor-topWallDistance));
+        resultRect.bottomLeft.movePoint(static_cast<int>(leftWallDistance*xScalingFactor-leftWallDistance),static_cast<int>(bottomWallDistance*yScalingFactor-bottomWallDistance));
+        resultRect.topRight.movePoint(static_cast<int>(rightWallDistance*xScalingFactor-rightWallDistance),static_cast<int>(topWallDistance*yScalingFactor-topWallDistance));
+        resultRect.bottomRight.movePoint(static_cast<int>(rightWallDistance*xScalingFactor-rightWallDistance),static_cast<int>(bottomWallDistance*yScalingFactor-bottomWallDistance));
 
         //Apply translations
-        moveRectangle(newEncompassingRect.topLeft.getX()-oldEncompassingRect.topLeft.getX(),newEncompassingRect.topLeft.getY()-oldEncompassingRect.topLeft.getY());
+        resultRect.moveRectangle(newEncompassingRect.topLeft.getX()-oldEncompassingRect.topLeft.getX(),newEncompassingRect.topLeft.getY()-oldEncompassingRect.topLeft.getY());
 
-        recalculateDimensions();
-        return true;
+        resultRect.recalculateDimensions();
+        return resultRect;
+    }
+
+    friend std::ostream& operator<< (std::ostream& out, const Rect& rect)
+    {
+        out << "Rect{"<<"TopLeft"<<rect.topLeft<<", "<<"BottomRight"<<rect.bottomRight<<'}';
+        return out;
     }
 
 };

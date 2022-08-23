@@ -5,7 +5,7 @@
 #include "BoardWindow.h"
 #include <iostream>
 
-BoardWindow::BoardWindow(const ConnectGame& newGame, bool useDefaults) : BaseWindow{}, m_currentGame{newGame}
+BoardWindow::BoardWindow(ConnectGame& newGame, bool useDefaults) : BaseWindow{}, m_currentGame{newGame}
 {
     if (useDefaults) {
         useDefaultTextures();
@@ -24,23 +24,76 @@ LRESULT BoardWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         return lRes;
         }
 
-    case WM_LBUTTONDOWN:
-        if (GetParent(m_hwnd) != NULL) {
-            SendMessage(GetParent(m_hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(m_hwnd), WM_LBUTTONDOWN), (LPARAM)m_hwnd);
+    case WM_MOUSEMOVE:
+        {
+            int x = LOWORD(lParam); //GET_X_LPARAM not needed here
+            int y = HIWORD(lParam); //GET_Y_LPARAM not needed here
+            topDownGeometry::Point location{x,y};
+            
+            if (m_hoveredColumn==-1) { //If the mouse was not previously hovering over a column
+                for (int i=0;i<m_columnRects.size();i++) {
+                    if (m_rescaledColumnRects[i].pointInRect(location)) { //The mouse has entered a new column
+                        m_hoveredColumn = i;
+
+                        RECT topBar;
+                        topBar.top=0; topBar.bottom=m_rescaledBoardRect.getTopLeft().getY();
+                        topBar.left=0; topBar.right=m_rescaledBoardRect.getTopRight().getX();
+                        InvalidateRect(m_hwnd,&topBar,TRUE);
+                    }
+                }
+            } else {    //If the mouse was previously hovering over a column
+                if (!m_rescaledColumnRects[m_hoveredColumn].pointInRect(location)) {    //Has the mouse left the hoveredcolumn?
+                    for (int i=0;i<m_columnRects.size();i++) {
+                        if (m_rescaledColumnRects[i].pointInRect(location)) {   //The mouse has entered a new column
+                            m_hoveredColumn = i;
+                            
+                            RECT topBar;
+                            topBar.top=0; topBar.bottom=m_rescaledBoardRect.getTopLeft().getY();
+                            topBar.left=0; topBar.right=m_rescaledBoardRect.getTopRight().getX();
+                            InvalidateRect(m_hwnd,&topBar,TRUE);
+
+                        } else {    //The mouse has not entered a new column
+                            m_hoveredColumn = -1;
+                        }
+                    }
+                }
+            }
         }
         return 0;
 
+    case WM_LBUTTONDOWN:
+        {
+            if (m_hoveredColumn!=-1) {  //Making sure the user clicked on a column
+                if (m_currentGame.dropPiece(m_hoveredColumn+1, Piece{m_currentGame.getCurrentTurn()})){
+                    //Piece successfully dropped, redraw board
+                    RedrawWindow(m_hwnd,NULL,NULL, RDW_INVALIDATE);
+                }
+                //Inform parent that a selection was made
+                SendMessage(GetParent(m_hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(m_hwnd), WM_LBUTTONDOWN), (LPARAM)m_hwnd);
+            }
+        }
+        return 0;
+
+
     case WM_SIZE:
         resizeAllRects(LOWORD(lParam),HIWORD(lParam));
+        RedrawWindow(m_hwnd,NULL,NULL, RDW_INVALIDATE);
         return 0;
-        
+
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(m_hwnd, &ps);
+
+            if (ps.fErase) { //Background needs to be erased
+                HBRUSH brush = CreateSolidBrush(0x00FFFFFF);
+                FillRect(hdc,&ps.rcPaint,brush);
+                DeleteObject(brush);
+            }
             
             paintBoard(hdc);
             paintPieces(hdc);
+            paintSelection(hdc);
 
             EndPaint(m_hwnd, &ps);
         }
@@ -96,6 +149,7 @@ void BoardWindow::paintPieces(const HDC& hdc)
                     StretchBlt(hdc,destination.getTopLeft().getX(),destination.getTopLeft().getY(),
                                 destination.getWidth(),destination.getHeight(),tempDC,
                                 0,0,std::get<2>(playerData).getWidth(),std::get<2>(playerData).getHeight(),SRCPAINT);
+                    SelectObject(tempDC, bmpMask);
                     }
                 }
             }
@@ -111,7 +165,23 @@ void BoardWindow::paintPieces(const HDC& hdc)
 
 void BoardWindow::paintSelection(const HDC& hdc)
 {
+    if (m_hoveredColumn==-1) {
+        return;
+    }
 
+    HBITMAP bmp = (HBITMAP) LoadImage(NULL,m_selectionPath,IMAGE_BITMAP,m_selectionSrcRect.getWidth(),m_selectionSrcRect.getHeight(),LR_LOADFROMFILE);
+    if (!bmp) {
+        std::cout << "Error Loading .bmp file: " << GetLastError() << "\n";
+        std::cout << "Image path: " << m_selectionPath << "\n";
+    }
+    HDC tempDC = CreateCompatibleDC(hdc);
+    HGDIOBJ replacedOBJ = SelectObject(tempDC, bmp);
+    StretchBlt(hdc,m_rescaledColumnRects[m_hoveredColumn].getTopLeft().getX(),0,
+                m_rescaledColumnRects[m_hoveredColumn].getWidth(),m_rescaledBoardRect.getTopLeft().getY(),tempDC,
+                0,0,m_selectionSrcRect.getWidth(),m_selectionSrcRect.getHeight(),SRCCOPY);
+    SelectObject(tempDC, replacedOBJ);
+    DeleteObject(bmp);
+    DeleteDC(tempDC);
 }
 
 void BoardWindow::setBoardTexture(LPCWSTR boardPath, int srcHeight, int srcWidth)
@@ -196,7 +266,6 @@ void BoardWindow::useDefaultTextures()
     if (!setPieceRects(newRects)) {
         std::cout << "Set Piece Failed";
     }
-    
 
     setColumnSelectionTexture(L"../resources/defaultSelection.bmp",topDownGeometry::Rect{topDownGeometry::Point{0,0},100,100});
     std::vector<topDownGeometry::Rect> newColumns;
@@ -204,31 +273,31 @@ void BoardWindow::useDefaultTextures()
     newColumns.reserve(m_currentGame.getColumnNumber());
     GetClientRect(m_hwnd,rcClient);
     for (int i=0;i<m_currentGame.getColumnNumber();i++) {
-        newColumns.push_back(topDownGeometry::Rect{topDownGeometry::Point{i*m_boardSrcRect.getWidth()/m_currentGame.getColumnNumber(),0},m_boardSrcRect.getWidth()/m_currentGame.getColumnNumber(),m_boardSrcRect.getHeight()});
+        newColumns.push_back(topDownGeometry::Rect{topDownGeometry::Point{50+(i*100),0},100,m_boardSrcRect.getHeight()});
     }
     if (!setColumnSelectionRects(newColumns)) {
         std::cout << "Set ColumnSelection Failed";
     }
 }
 
-void BoardWindow::resizeAllRects(int windowWidth, int windowHeight)
+void BoardWindow::resizeAllRects(int windowWidth, int windowHeight, bool maintainRatio)
 {
     int topLimit = windowHeight/8 +1; //+1 to make sure the textures dont overlap
 
     //Resize m_rescaledBoardRect 
     topDownGeometry::Rect newBoardRect{topDownGeometry::Point{0,topLimit},windowWidth,windowHeight-topLimit};
-    m_rescaledBoardRect.transformRect(m_boardSrcRect, newBoardRect);
+    m_rescaledBoardRect = m_boardSrcRect.transformRect(m_boardSrcRect, newBoardRect);
     
     //Resize m_rescaledPieceRects based on the resized board
     for (int i=0;i<m_currentGame.getColumnNumber();i++) {
         for (int j=0;j<m_currentGame.getRowNumber();j++) {
-            m_rescaledPieceRects[i*m_currentGame.getRowNumber()+j].transformRect(m_boardSrcRect, newBoardRect);
+            m_rescaledPieceRects[i*m_currentGame.getRowNumber()+j] = m_pieceRects[i*m_currentGame.getRowNumber()+j].transformRect(m_boardSrcRect, newBoardRect);
         }
     }
 
     //Resize m_rescaledColumnRects based on the resized board
     for (int i=0;i<m_currentGame.getColumnNumber();i++) {
-        m_rescaledColumnRects[i].transformRect(m_boardSrcRect, newBoardRect);
+        m_rescaledColumnRects[i] = m_columnRects[i].transformRect(m_boardSrcRect, newBoardRect);
     }
 
 }

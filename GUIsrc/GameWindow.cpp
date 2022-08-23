@@ -5,7 +5,7 @@
 #include "GameWindow.h"
 #include <iostream>
 
-GameWindow::GameWindow(const ConnectGame& newGame) : BaseWindow{},m_boardWindow{newGame}, m_currentGame{newGame}{}
+GameWindow::GameWindow(ConnectGame& newGame) : BaseWindow{},m_boardWindow{newGame}, m_currentGame{newGame}{}
 
 PCWSTR  GameWindow::className() const { return L"MainWindow"; }
 LRESULT GameWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -22,6 +22,26 @@ LRESULT GameWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         return lRes;
         }
+    case WM_SIZE:
+        {
+            RECT windowRect;
+            int windowWidth, windowHeight;
+            GetWindowRect(m_hwnd, &windowRect);
+            windowWidth = windowRect.right - windowRect.left;
+            windowHeight = windowRect.bottom - windowRect.top;
+
+            bool result;
+
+            result = MoveWindow(m_textHwnd,windowWidth*(2.0/3.0)+1,0,windowWidth*(1.0/3.0),windowHeight,TRUE);
+            if (!result) {
+                return 1;
+            }
+            result = MoveWindow(m_boardWindow.getHandle(),0,0,windowWidth*(2.0/3.0),windowHeight,TRUE);
+            if (!result) {
+                return 1;
+            }
+        }
+        return 0;
 
     case WM_GETMINMAXINFO:
         {

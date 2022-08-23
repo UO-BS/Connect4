@@ -31,7 +31,6 @@ private:
 
     //Functions to cycle game turns
     void cycleTurn();
-    const Player& getCurrentTurn() const;
 
 public:
     //remove default constructor
@@ -60,6 +59,8 @@ public:
     void displayBoardToConsole() const;
 
     const Player* getPlayerList() const;
+
+    const Player& getCurrentTurn() const;
 };
 
 #endif
