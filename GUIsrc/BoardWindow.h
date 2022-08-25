@@ -67,7 +67,7 @@ public:
     bool setColumnSelectionRects(std::vector<topDownGeometry::Rect> newRects);
     //bool setColumnSelectionRects(std::vector<?> newRects); NEEDS TO AVOID USING MY GEOMETRY
 
-    void resizeAllRects(int windowWidth, int windowHeight, bool maintainRatio=false);
+    void resizeAllRects(int windowWidth, int windowHeight, bool maintainRatio=true);
 };
 
 #endif

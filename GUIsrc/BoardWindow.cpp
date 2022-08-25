@@ -29,15 +29,16 @@ LRESULT BoardWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
             int x = LOWORD(lParam); //GET_X_LPARAM not needed here
             int y = HIWORD(lParam); //GET_Y_LPARAM not needed here
             topDownGeometry::Point location{x,y};
+
+            RECT topBar;
+            topBar.top=0; topBar.bottom=m_rescaledBoardRect.getTopLeft().getY();
+            topBar.left=0; topBar.right=m_rescaledBoardRect.getTopRight().getX();
             
             if (m_hoveredColumn==-1) { //If the mouse was not previously hovering over a column
                 for (int i=0;i<m_columnRects.size();i++) {
                     if (m_rescaledColumnRects[i].pointInRect(location)) { //The mouse has entered a new column
                         m_hoveredColumn = i;
 
-                        RECT topBar;
-                        topBar.top=0; topBar.bottom=m_rescaledBoardRect.getTopLeft().getY();
-                        topBar.left=0; topBar.right=m_rescaledBoardRect.getTopRight().getX();
                         InvalidateRect(m_hwnd,&topBar,TRUE);
                     }
                 }
@@ -47,13 +48,12 @@ LRESULT BoardWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
                         if (m_rescaledColumnRects[i].pointInRect(location)) {   //The mouse has entered a new column
                             m_hoveredColumn = i;
                             
-                            RECT topBar;
-                            topBar.top=0; topBar.bottom=m_rescaledBoardRect.getTopLeft().getY();
-                            topBar.left=0; topBar.right=m_rescaledBoardRect.getTopRight().getX();
                             InvalidateRect(m_hwnd,&topBar,TRUE);
 
                         } else {    //The mouse has not entered a new column
                             m_hoveredColumn = -1;
+
+                            InvalidateRect(m_hwnd,&topBar,TRUE);
                         }
                     }
                 }
@@ -65,8 +65,19 @@ LRESULT BoardWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             if (m_hoveredColumn!=-1) {  //Making sure the user clicked on a column
                 if (m_currentGame.dropPiece(m_hoveredColumn+1, Piece{m_currentGame.getCurrentTurn()})){
-                    //Piece successfully dropped, redraw board
-                    RedrawWindow(m_hwnd,NULL,NULL, RDW_INVALIDATE);
+                    //Piece successfully dropped, redraw position
+                    for (int i=0;i<m_currentGame.getRowNumber();i++) {
+                        if (m_currentGame.getBoard()[i][m_hoveredColumn]) {
+                            RECT pieceRect;
+                            pieceRect.top   =m_rescaledPieceRects[i*m_currentGame.getColumnNumber()+m_hoveredColumn].getTopLeft().getY(); 
+                            pieceRect.bottom=m_rescaledPieceRects[i*m_currentGame.getColumnNumber()+m_hoveredColumn].getBottomRight().getY();
+                            pieceRect.left  =m_rescaledPieceRects[i*m_currentGame.getColumnNumber()+m_hoveredColumn].getTopLeft().getX(); 
+                            pieceRect.right =m_rescaledPieceRects[i*m_currentGame.getColumnNumber()+m_hoveredColumn].getBottomRight().getX();
+
+                            InvalidateRect(m_hwnd,&pieceRect,TRUE);
+                            break;
+                        }
+                    }
                 }
                 //Inform parent that a selection was made
                 SendMessage(GetParent(m_hwnd), WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(m_hwnd), WM_LBUTTONDOWN), (LPARAM)m_hwnd);
@@ -76,7 +87,7 @@ LRESULT BoardWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
     case WM_SIZE:
-        resizeAllRects(LOWORD(lParam),HIWORD(lParam));
+        resizeAllRects(LOWORD(lParam),HIWORD(lParam),true);
         RedrawWindow(m_hwnd,NULL,NULL, RDW_INVALIDATE);
         return 0;
 
@@ -284,8 +295,26 @@ void BoardWindow::resizeAllRects(int windowWidth, int windowHeight, bool maintai
 {
     int topLimit = windowHeight/8 +1; //+1 to make sure the textures dont overlap
 
+    topDownGeometry::Rect newBoardRect;
+    if (maintainRatio) {
+        double srcRatio = static_cast<double>(m_boardSrcRect.getWidth()) / static_cast<double>(m_boardSrcRect.getHeight());
+        double newRatio = static_cast<double>(windowWidth) / static_cast<double>(windowHeight-topLimit);
+        if (srcRatio > newRatio) {  //Width is the limiting dimension
+            double widthRatio = static_cast<double>(m_boardSrcRect.getWidth()) / static_cast<double>(windowWidth);
+            newBoardRect = topDownGeometry::Rect{topDownGeometry::Point{0,topLimit},
+                                                    static_cast<int>(m_boardSrcRect.getWidth()/widthRatio),
+                                                    static_cast<int>(m_boardSrcRect.getHeight()/widthRatio)};
+        } else {    //Height is the limiting dimension
+            double heightRatio = static_cast<double>(m_boardSrcRect.getHeight()) / static_cast<double>(windowHeight-topLimit);
+            newBoardRect = topDownGeometry::Rect{topDownGeometry::Point{0,topLimit},
+                                                    static_cast<int>(m_boardSrcRect.getWidth()/heightRatio),
+                                                    static_cast<int>(m_boardSrcRect.getHeight()/heightRatio)};
+        }
+    } else {
+        newBoardRect = topDownGeometry::Rect{topDownGeometry::Point{0,topLimit},windowWidth,windowHeight-topLimit};
+    }
+    
     //Resize m_rescaledBoardRect 
-    topDownGeometry::Rect newBoardRect{topDownGeometry::Point{0,topLimit},windowWidth,windowHeight-topLimit};
     m_rescaledBoardRect = m_boardSrcRect.transformRect(m_boardSrcRect, newBoardRect);
     
     //Resize m_rescaledPieceRects based on the resized board

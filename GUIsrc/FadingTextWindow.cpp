@@ -39,6 +39,7 @@ LRESULT FadingTextWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 int index = (m_fadeDownwards)?i:m_rows-i-1;
                 SetWindowPos(m_staticControls[i].first,NULL,0,height*index,LOWORD(lParam),height,SWP_NOZORDER);
             }
+            RedrawWindow(m_hwnd,NULL,NULL, RDW_INVALIDATE);
         }
         return 0;
     
