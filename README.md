@@ -8,7 +8,7 @@ The relevant files include: ConnectGame.cpp, ConnectGame.h, Piece.cpp, Piece.h, 
 
 To run the Demo:
 
-Windows Graphical version: Download "bin" and "resources" folder and run mainGUI.exe.
+Windows Graphical version: Download "bin" and "resources" folder to the same directory and run mainGUI.exe.
 
 Windows System: Download and run main.exe (from the bin folder).
 
